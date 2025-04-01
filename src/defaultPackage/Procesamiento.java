@@ -6,8 +6,50 @@ import java.util.List;
 public class Procesamiento {
 
 	public enum TipoBloque {
-		LIBRE, BLOQUE, GATO
+		LIBRE, BLOQUE, GATO, GATOHORIZONTAL, GATOVERTICAL, GATOESQUINAABAJODERECHA, GATOESQUINAABAJOIZQUIERDA,
+		GATOESQUINAARRIBADERECHA, GATOESQUINAARRIBAIZQUIERDA
 	};
+
+	public static TipoBloque obtenerEsquina(String movimientoAnterior, String movimientoActual) {
+
+		switch (movimientoAnterior) {
+		case "Izquierda":
+			if (movimientoActual.equals("Arriba"))
+				return TipoBloque.GATOESQUINAABAJODERECHA;
+			else if (movimientoActual.equals("Abajo"))
+				return TipoBloque.GATOESQUINAARRIBADERECHA;
+
+			return TipoBloque.GATOHORIZONTAL;
+		case "Derecha":
+			if (movimientoActual.equals("Arriba"))
+				return TipoBloque.GATOESQUINAABAJOIZQUIERDA;
+			else if (movimientoActual.equals("Abajo"))
+				return TipoBloque.GATOESQUINAARRIBAIZQUIERDA;
+			return TipoBloque.GATOHORIZONTAL;
+		case "Arriba":
+			if (movimientoActual.equals("Izquierda"))
+				return TipoBloque.GATOESQUINAARRIBAIZQUIERDA;
+			else if (movimientoActual.equals("Derecha"))
+				return TipoBloque.GATOESQUINAARRIBADERECHA;
+			return TipoBloque.GATOVERTICAL;
+		case "Abajo":
+			if (movimientoActual.equals("Izquierda"))
+				return TipoBloque.GATOESQUINAABAJOIZQUIERDA;
+			else if (movimientoActual.equals("Derecha"))
+				return TipoBloque.GATOESQUINAABAJODERECHA;
+			return TipoBloque.GATOVERTICAL;
+		default:
+
+			if (movimientoActual.equals("Abajo") || movimientoActual.equals("Arriba"))
+				return TipoBloque.GATOVERTICAL;
+
+			else if (movimientoActual.equals("Izquierda") || movimientoActual.equals("Derecha"))
+				return TipoBloque.GATOHORIZONTAL;
+			break;
+		}
+
+		return TipoBloque.LIBRE;
+	}
 
 	private static List<String> moverIzquierda(TipoBloque[][] grilla, int posX, int posY) {
 
@@ -32,7 +74,7 @@ public class Procesamiento {
 
 		return null;
 	}
-	
+
 	private static List<String> moverDerecha(TipoBloque[][] grilla, int posX, int posY) {
 
 		if (posX >= grilla[0].length - 1 || grilla[posY][posX + 1] != TipoBloque.LIBRE)
@@ -42,10 +84,10 @@ public class Procesamiento {
 		for (int i = 0; i < grilla.length; i++)
 			aux[i] = grilla[i].clone();
 
-		do{
+		do {
 			posX++;
 			aux[posY][posX] = TipoBloque.BLOQUE;
-		}while(posX < grilla[0].length - 1 && aux[posY][posX + 1] == TipoBloque.LIBRE);
+		} while (posX < aux[0].length - 1 && aux[posY][posX + 1] == TipoBloque.LIBRE);
 
 		List<String> Resultado = resolver(aux, posX, posY);
 
@@ -55,9 +97,9 @@ public class Procesamiento {
 		}
 
 		return null;
-		
+
 	}
-	
+
 	private static List<String> moverArriba(TipoBloque[][] grilla, int posX, int posY) {
 
 		if (posY - 1 < 0 || grilla[posY - 1][posX] != TipoBloque.LIBRE)
@@ -67,10 +109,10 @@ public class Procesamiento {
 		for (int i = 0; i < grilla.length; i++)
 			aux[i] = grilla[i].clone();
 
-		do{
+		do {
 			posY--;
 			aux[posY][posX] = TipoBloque.BLOQUE;
-		}while(posY - 1 >= 0 && aux[posY - 1][posX] == TipoBloque.LIBRE);
+		} while (posY - 1 >= 0 && aux[posY - 1][posX] == TipoBloque.LIBRE);
 
 		List<String> Resultado = resolver(aux, posX, posY);
 
@@ -79,9 +121,9 @@ public class Procesamiento {
 			return Resultado;
 		}
 
-		return null;		
+		return null;
 	}
-	
+
 	private static List<String> moverAbajo(TipoBloque[][] grilla, int posX, int posY) {
 
 		if (posY >= grilla.length - 1 || grilla[posY + 1][posX] != TipoBloque.LIBRE)
@@ -91,10 +133,10 @@ public class Procesamiento {
 		for (int i = 0; i < grilla.length; i++)
 			aux[i] = grilla[i].clone();
 
-		do{
+		do {
 			posY++;
 			aux[posY][posX] = TipoBloque.BLOQUE;
-		}while(posY + 1 <= grilla.length - 1 && aux[posY + 1][posX] == TipoBloque.LIBRE);
+		} while (posY < aux.length - 1 && aux[posY + 1][posX] == TipoBloque.LIBRE);
 
 		List<String> Resultado = resolver(aux, posX, posY);
 
@@ -103,7 +145,7 @@ public class Procesamiento {
 			return Resultado;
 		}
 
-		return null;		
+		return null;
 	}
 
 	public static List<String> resolver(TipoBloque[][] grilla, int posX, int posY) {
@@ -134,10 +176,9 @@ public class Procesamiento {
 
 		// ---------------------------------------------//
 		// Abajo
-		
+
 		if ((Resultado = Procesamiento.moverAbajo(grilla, posX, posY)) != null)
 			return Resultado;
-
 
 		return null;
 	}

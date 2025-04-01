@@ -6,7 +6,7 @@ import javax.swing.ImageIcon;
 
 public class GestorImagenes {
 
-	private static int tamanioImagenes = 30;
+	private static int tamanioImagenes = 40;
 
 	private static HashMap<String, ImageIcon> imagenes;
 
