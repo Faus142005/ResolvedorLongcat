@@ -1,49 +1,48 @@
 package defaultPackage;
 
-import java.util.LinkedList;
 import java.util.List;
+
+import estructuras.ColaDoblementeEnlazada;
+import estructuras.Enumerativos.Movimiento;
+import estructuras.Enumerativos.TipoBloque;
+import estructuras.InformacionMovimiento;
 
 public class Procesamiento {
 
-	public enum TipoBloque {
-		LIBRE, BLOQUE, GATO, GATOHORIZONTAL, GATOVERTICAL, GATOESQUINAABAJODERECHA, GATOESQUINAABAJOIZQUIERDA,
-		GATOESQUINAARRIBADERECHA, GATOESQUINAARRIBAIZQUIERDA
-	};
-
-	public static TipoBloque obtenerEsquina(String movimientoAnterior, String movimientoActual) {
+	public static TipoBloque obtenerEsquina(Movimiento movimientoAnterior, Movimiento movimientoActual) {
 
 		switch (movimientoAnterior) {
-		case "Izquierda":
-			if (movimientoActual.equals("Arriba"))
+		case IZQUIERDA:
+			if (movimientoActual == Movimiento.ARRIBA)
 				return TipoBloque.GATOESQUINAABAJODERECHA;
-			else if (movimientoActual.equals("Abajo"))
+			else if (movimientoActual == Movimiento.ABAJO)
 				return TipoBloque.GATOESQUINAARRIBADERECHA;
 
 			return TipoBloque.GATOHORIZONTAL;
-		case "Derecha":
-			if (movimientoActual.equals("Arriba"))
+		case DERECHA:
+			if (movimientoActual == Movimiento.ARRIBA)
 				return TipoBloque.GATOESQUINAABAJOIZQUIERDA;
-			else if (movimientoActual.equals("Abajo"))
+			else if (movimientoActual == Movimiento.ABAJO)
 				return TipoBloque.GATOESQUINAARRIBAIZQUIERDA;
 			return TipoBloque.GATOHORIZONTAL;
-		case "Arriba":
-			if (movimientoActual.equals("Izquierda"))
+		case ARRIBA:
+			if (movimientoActual == Movimiento.IZQUIERDA)
 				return TipoBloque.GATOESQUINAARRIBAIZQUIERDA;
-			else if (movimientoActual.equals("Derecha"))
+			else if (movimientoActual == Movimiento.DERECHA)
 				return TipoBloque.GATOESQUINAARRIBADERECHA;
 			return TipoBloque.GATOVERTICAL;
-		case "Abajo":
-			if (movimientoActual.equals("Izquierda"))
+		case ABAJO:
+			if (movimientoActual == Movimiento.IZQUIERDA)
 				return TipoBloque.GATOESQUINAABAJOIZQUIERDA;
-			else if (movimientoActual.equals("Derecha"))
+			else if (movimientoActual == Movimiento.DERECHA)
 				return TipoBloque.GATOESQUINAABAJODERECHA;
 			return TipoBloque.GATOVERTICAL;
 		default:
 
-			if (movimientoActual.equals("Abajo") || movimientoActual.equals("Arriba"))
+			if (movimientoActual == Movimiento.ABAJO || movimientoActual == Movimiento.ARRIBA)
 				return TipoBloque.GATOVERTICAL;
 
-			else if (movimientoActual.equals("Izquierda") || movimientoActual.equals("Derecha"))
+			else if (movimientoActual == Movimiento.IZQUIERDA || movimientoActual == Movimiento.DERECHA)
 				return TipoBloque.GATOHORIZONTAL;
 			break;
 		}
@@ -51,12 +50,15 @@ public class Procesamiento {
 		return TipoBloque.LIBRE;
 	}
 
-	private static List<String> moverIzquierda(TipoBloque[][] grilla, int posX, int posY) {
+	private static ColaDoblementeEnlazada<InformacionMovimiento> moverIzquierda(TipoBloque[][] grilla, int posX,
+			int posY) {
 
 		if (posX - 1 < 0 || grilla[posY][posX - 1] != TipoBloque.LIBRE)
 			return null;
 
+		int posInicial = posX;
 		TipoBloque[][] aux = new TipoBloque[grilla.length][grilla[0].length];
+
 		for (int i = 0; i < grilla.length; i++)
 			aux[i] = grilla[i].clone();
 
@@ -65,22 +67,39 @@ public class Procesamiento {
 			aux[posY][posX] = TipoBloque.BLOQUE;
 		} while (posX - 1 >= 0 && aux[posY][posX - 1] == TipoBloque.LIBRE);
 
-		List<String> Resultado = resolver(aux, posX, posY);
+		ColaDoblementeEnlazada<InformacionMovimiento> Resultado = resolver(aux, posX, posY);
 
 		if (Resultado != null) {
-			Resultado.addFirst("Izquierda");
+
+			InformacionMovimiento inf = new InformacionMovimiento();
+			inf.setMovimiento(Movimiento.IZQUIERDA);
+			inf.setCantidadBloquesMovidos(Math.abs(posInicial - posX));
+			
+			//Modificar siguiente movimiento (Esquina)
+
+			if (Resultado.tieneCabezera()) {
+				InformacionMovimiento infSiguiente = Resultado.obtener();
+				infSiguiente.setEsquina(obtenerEsquina(Movimiento.IZQUIERDA, infSiguiente.getMovimiento()));
+			}
+			
+			//------------------------------------//
+
+			Resultado.insertar(inf);
 			return Resultado;
 		}
 
 		return null;
 	}
 
-	private static List<String> moverDerecha(TipoBloque[][] grilla, int posX, int posY) {
+	private static ColaDoblementeEnlazada<InformacionMovimiento> moverDerecha(TipoBloque[][] grilla, int posX,
+			int posY) {
 
 		if (posX >= grilla[0].length - 1 || grilla[posY][posX + 1] != TipoBloque.LIBRE)
 			return null;
 
+		int posInicial = posX;
 		TipoBloque[][] aux = new TipoBloque[grilla.length][grilla[0].length];
+
 		for (int i = 0; i < grilla.length; i++)
 			aux[i] = grilla[i].clone();
 
@@ -89,10 +108,24 @@ public class Procesamiento {
 			aux[posY][posX] = TipoBloque.BLOQUE;
 		} while (posX < aux[0].length - 1 && aux[posY][posX + 1] == TipoBloque.LIBRE);
 
-		List<String> Resultado = resolver(aux, posX, posY);
+		ColaDoblementeEnlazada<InformacionMovimiento> Resultado = resolver(aux, posX, posY);
 
 		if (Resultado != null) {
-			Resultado.addFirst("Derecha");
+
+			InformacionMovimiento inf = new InformacionMovimiento();
+			inf.setMovimiento(Movimiento.DERECHA);
+			inf.setCantidadBloquesMovidos(Math.abs(posInicial - posX));
+
+			//Modificar siguiente movimiento (Esquina)
+
+			if (Resultado.tieneCabezera()) {
+				InformacionMovimiento infSiguiente = Resultado.obtener();
+				infSiguiente.setEsquina(obtenerEsquina(Movimiento.DERECHA, infSiguiente.getMovimiento()));
+			}
+			
+			//------------------------------------//
+			
+			Resultado.insertar(inf);
 			return Resultado;
 		}
 
@@ -100,12 +133,15 @@ public class Procesamiento {
 
 	}
 
-	private static List<String> moverArriba(TipoBloque[][] grilla, int posX, int posY) {
+	private static ColaDoblementeEnlazada<InformacionMovimiento> moverArriba(TipoBloque[][] grilla, int posX,
+			int posY) {
 
 		if (posY - 1 < 0 || grilla[posY - 1][posX] != TipoBloque.LIBRE)
 			return null;
 
+		int posInicial = posY;
 		TipoBloque[][] aux = new TipoBloque[grilla.length][grilla[0].length];
+
 		for (int i = 0; i < grilla.length; i++)
 			aux[i] = grilla[i].clone();
 
@@ -114,22 +150,38 @@ public class Procesamiento {
 			aux[posY][posX] = TipoBloque.BLOQUE;
 		} while (posY - 1 >= 0 && aux[posY - 1][posX] == TipoBloque.LIBRE);
 
-		List<String> Resultado = resolver(aux, posX, posY);
+		ColaDoblementeEnlazada<InformacionMovimiento> Resultado = resolver(aux, posX, posY);
 
 		if (Resultado != null) {
-			Resultado.addFirst("Arriba");
+
+			InformacionMovimiento inf = new InformacionMovimiento();
+			inf.setMovimiento(Movimiento.ARRIBA);
+			inf.setCantidadBloquesMovidos(Math.abs(posInicial - posY));
+
+			//Modificar siguiente movimiento (Esquina)
+
+			if (Resultado.tieneCabezera()) {
+				InformacionMovimiento infSiguiente = Resultado.obtener();
+				infSiguiente.setEsquina(obtenerEsquina(Movimiento.ARRIBA, infSiguiente.getMovimiento()));
+			}
+			
+			//------------------------------------//
+			
+			Resultado.insertar(inf);
 			return Resultado;
 		}
 
 		return null;
 	}
 
-	private static List<String> moverAbajo(TipoBloque[][] grilla, int posX, int posY) {
+	private static ColaDoblementeEnlazada<InformacionMovimiento> moverAbajo(TipoBloque[][] grilla, int posX, int posY) {
 
 		if (posY >= grilla.length - 1 || grilla[posY + 1][posX] != TipoBloque.LIBRE)
 			return null;
 
+		int posInicial = posY;
 		TipoBloque[][] aux = new TipoBloque[grilla.length][grilla[0].length];
+
 		for (int i = 0; i < grilla.length; i++)
 			aux[i] = grilla[i].clone();
 
@@ -138,24 +190,37 @@ public class Procesamiento {
 			aux[posY][posX] = TipoBloque.BLOQUE;
 		} while (posY < aux.length - 1 && aux[posY + 1][posX] == TipoBloque.LIBRE);
 
-		List<String> Resultado = resolver(aux, posX, posY);
+		ColaDoblementeEnlazada<InformacionMovimiento> Resultado = resolver(aux, posX, posY);
 
 		if (Resultado != null) {
-			Resultado.addFirst("Abajo");
+
+			InformacionMovimiento inf = new InformacionMovimiento();
+			inf.setMovimiento(Movimiento.ABAJO);
+			inf.setCantidadBloquesMovidos(Math.abs(posInicial - posY));
+
+			//Modificar siguiente movimiento (Esquina)
+
+			if (Resultado.tieneCabezera()) {
+				InformacionMovimiento infSiguiente = Resultado.obtener();
+				infSiguiente.setEsquina(obtenerEsquina(Movimiento.ABAJO, infSiguiente.getMovimiento()));
+			}
+			
+			//------------------------------------//
+
+			Resultado.insertar(inf);
 			return Resultado;
 		}
 
 		return null;
 	}
 
-	public static List<String> resolver(TipoBloque[][] grilla, int posX, int posY) {
+	public static ColaDoblementeEnlazada<InformacionMovimiento> resolver(TipoBloque[][] grilla, int posX, int posY) {
 
 		// imprimirGrilla(grilla);
 		if (grillaCompleta(grilla))
-			return new LinkedList<String>();
+			return new ColaDoblementeEnlazada<InformacionMovimiento>();
 
-		List<String> Resultado;
-		TipoBloque[][] aux;
+		ColaDoblementeEnlazada<InformacionMovimiento> Resultado;
 
 		// ---------------------------------------------//
 		// Izquierda

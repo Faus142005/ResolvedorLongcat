@@ -4,7 +4,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -13,8 +12,9 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 import defaultPackage.GestorImagenes;
-import defaultPackage.Procesamiento;
-import defaultPackage.Procesamiento.TipoBloque;
+import estructuras.ColaDoblementeEnlazada;
+import estructuras.Enumerativos.TipoBloque;
+import estructuras.InformacionMovimiento;
 
 public class VentanaControlador {
 
@@ -26,14 +26,12 @@ public class VentanaControlador {
 	private JButton[][] botonesCuadricula;
 	private TipoBloque[][] cuadricula;
 	private int posX = -1, posY = -1;
-	private List<String> Pasos;
+	private ColaDoblementeEnlazada<InformacionMovimiento> Pasos;
 
 	// Animacion
 
 	private TipoBloque[][] cuadriculaPasos;
 	private int posPasosX = -1, posPasosY = -1;
-	private int pasoActual = -1;
-	private String movimientoAnterior = "";
 
 	public VentanaControlador(VentanaModelo modelo, VentanaVista vista) {
 
@@ -66,20 +64,18 @@ public class VentanaControlador {
 			public void actionPerformed(ActionEvent e) {
 
 				Pasos = modelo.resolverNivel(cuadricula, posX, posY);
+				
+				vista.getPasos().setText("");
 
 				if (Pasos != null) {
 					vista.getBotonPasoAnterior().setEnabled(true);
 					vista.getBotonPasoSiguiente().setEnabled(true);
 
-					vista.getPasos().setText("");
+					for (InformacionMovimiento paso : Pasos)
+						vista.getPasos().setText(vista.getPasos().getText() + paso.getMovimiento() + "\n");
 
-					for (String paso : Pasos)
-						vista.getPasos().setText(vista.getPasos().getText() + paso + "\n");
-
-					pasoActual = 0;
 					posPasosX = posX;
 					posPasosY = posY;
-					movimientoAnterior = "";
 
 					cuadriculaPasos = new TipoBloque[cuadricula.length][cuadricula[0].length];
 
@@ -100,38 +96,39 @@ public class VentanaControlador {
 
 				// Dibujar paso
 
-				if (pasoActual >= Pasos.size())
-					return;
+				InformacionMovimiento infMov = Pasos.obtener();
+				
+				dibujarEsquina(infMov.getEsquina());
 
-				String movimientoActual = Pasos.get(pasoActual);
+				switch (infMov.getMovimiento()) {
+				case IZQUIERDA:
 
-				dibujarEsquina(Procesamiento.obtenerEsquina(movimientoAnterior, movimientoActual));
-
-				switch (movimientoActual) {
-				case "Izquierda":
-
-					dibujarIzquierda();
+					dibujarIzquierda(infMov);
 					break;
 
-				case "Derecha":
+				case DERECHA:
 
-					dibujarDerecha();
+					dibujarDerecha(infMov);
 					break;
 
-				case "Arriba":
+				case ARRIBA:
 
-					dibujarArriba();
+					dibujarArriba(infMov);
 					break;
 
-				case "Abajo":
+				case ABAJO:
 
-					dibujarAbajo();
+					dibujarAbajo(infMov);
 					break;
 				}
 
-				movimientoAnterior = movimientoActual;
+				if (Pasos.tieneSiguiente())
+					Pasos.avanzar();
+				else
+					((JButton) e.getSource()).setEnabled(false);
 
-				pasoActual++;
+				vista.revalidate();
+				vista.repaint();
 			}
 		});
 	}
@@ -212,12 +209,12 @@ public class VentanaControlador {
 								posX = posY = -1;
 
 							cuadricula[fila][columna] = TipoBloque.LIBRE;
-							boton.setIcon(GestorImagenes.getImage("campo"));
+							boton.setIcon(GestorImagenes.getImage(TipoBloque.LIBRE.toString()));
 
 						} else if (SwingUtilities.isLeftMouseButton(e)) {
 
 							cuadricula[fila][columna] = TipoBloque.BLOQUE;
-							boton.setIcon(GestorImagenes.getImage("bloque"));
+							boton.setIcon(GestorImagenes.getImage(TipoBloque.BLOQUE.toString()));
 
 						} else if (SwingUtilities.isRightMouseButton(e)) {
 
@@ -228,7 +225,7 @@ public class VentanaControlador {
 							posY = fila;
 
 							cuadricula[fila][columna] = TipoBloque.GATO;
-							boton.setIcon(GestorImagenes.getImage("gato"));
+							boton.setIcon(GestorImagenes.getImage(TipoBloque.GATO.toString()));
 
 						}
 					}
@@ -236,12 +233,12 @@ public class VentanaControlador {
 
 				if (i == 0 || i == filas - 1 || j == 0 || j == columnas - 1) {
 					cuadricula[i][j] = TipoBloque.BLOQUE;
-					boton.setIcon(GestorImagenes.getImage("bloque"));
+					boton.setIcon(GestorImagenes.getImage(TipoBloque.BLOQUE.toString()));
 				}
 
 				else {
 					cuadricula[i][j] = TipoBloque.LIBRE;
-					boton.setIcon(GestorImagenes.getImage("campo"));
+					boton.setIcon(GestorImagenes.getImage(TipoBloque.LIBRE.toString()));
 				}
 
 				botonesCuadricula[i][j] = boton;
@@ -256,71 +253,67 @@ public class VentanaControlador {
 	private void dibujarEsquina(TipoBloque esquina) {
 
 		cuadriculaPasos[posPasosY][posPasosX] = esquina;
-
-		switch (esquina) {
-		case GATOESQUINAABAJODERECHA:
-			botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage("giroAbajoDerecha"));
-			break;
-		case GATOESQUINAABAJOIZQUIERDA:
-			botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage("giroAbajoIzquierda"));
-			break;
-		case GATOESQUINAARRIBADERECHA:
-			botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage("giroArribaDerecha"));
-			break;
-		case GATOESQUINAARRIBAIZQUIERDA:
-			botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage("giroArribaIzquierda"));
-			break;
-		case GATOHORIZONTAL:
-			botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage("desplazamientoHorizontal"));
-			break;
-		case GATOVERTICAL:
-			botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage("desplazamientoVertical"));
-			break;
-		default:
-			break;
-		}
+		botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage(esquina.toString()));
 	}
 
-	private void dibujarIzquierda() {
-		while (posPasosX - 1 >= 0 && cuadriculaPasos[posPasosY][posPasosX - 1] == TipoBloque.LIBRE) {
+	private void dibujarIzquierda(InformacionMovimiento infMov) {
+
+		for (int i = 0; i < infMov.getCantidadBloquesMovidos() - 1; i++) {
 			posPasosX--;
 			cuadriculaPasos[posPasosY][posPasosX] = TipoBloque.GATOHORIZONTAL;
-			botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage("desplazamientoHorizontal"));
+			botonesCuadricula[posPasosY][posPasosX]
+					.setIcon(GestorImagenes.getImage(TipoBloque.GATOHORIZONTAL.toString()));
 		}
+
+		posPasosX--;
+
 		cuadriculaPasos[posPasosY][posPasosX] = TipoBloque.GATO;
-		botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage("gato"));
+		botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage(TipoBloque.GATO.toString()));
 	}
 
-	private void dibujarDerecha() {
-		while (posPasosX + 1 < cuadriculaPasos[0].length
-				&& cuadriculaPasos[posPasosY][posPasosX + 1] == TipoBloque.LIBRE) {
+	private void dibujarDerecha(InformacionMovimiento infMov) {
+		
+		for (int i = 0; i < infMov.getCantidadBloquesMovidos() - 1; i++) {
 			posPasosX++;
 			cuadriculaPasos[posPasosY][posPasosX] = TipoBloque.GATOHORIZONTAL;
-			botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage("desplazamientoHorizontal"));
+			botonesCuadricula[posPasosY][posPasosX]
+					.setIcon(GestorImagenes.getImage(TipoBloque.GATOHORIZONTAL.toString()));
 		}
+
+		posPasosX++;
+
 		cuadriculaPasos[posPasosY][posPasosX] = TipoBloque.GATO;
-		botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage("gato"));
+		botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage(TipoBloque.GATO.toString()));
 	}
 
-	private void dibujarArriba() {
-		while (posPasosY - 1 >= 0 && cuadriculaPasos[posPasosY - 1][posPasosX] == TipoBloque.LIBRE) {
+	private void dibujarArriba(InformacionMovimiento infMov) {
+
+		for (int i = 0; i < infMov.getCantidadBloquesMovidos() - 1; i++) {
 			posPasosY--;
 			cuadriculaPasos[posPasosY][posPasosX] = TipoBloque.GATOVERTICAL;
-			botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage("desplazamientoVertical"));
+			botonesCuadricula[posPasosY][posPasosX]
+					.setIcon(GestorImagenes.getImage(TipoBloque.GATOVERTICAL.toString()));
 		}
+
+		posPasosY--;
+
 		cuadriculaPasos[posPasosY][posPasosX] = TipoBloque.GATO;
-		botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage("gato"));
+		botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage(TipoBloque.GATO.toString()));
 	}
 
-	private void dibujarAbajo() {
-		while (posPasosY + 1 < cuadriculaPasos.length
-				&& cuadriculaPasos[posPasosY + 1][posPasosX] == TipoBloque.LIBRE) {
+	private void dibujarAbajo(InformacionMovimiento infMov) {
+
+		for (int i = 0; i < infMov.getCantidadBloquesMovidos() - 1; i++) {
 			posPasosY++;
 			cuadriculaPasos[posPasosY][posPasosX] = TipoBloque.GATOVERTICAL;
-			botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage("desplazamientoVertical"));
+			botonesCuadricula[posPasosY][posPasosX]
+					.setIcon(GestorImagenes.getImage(TipoBloque.GATOVERTICAL.toString()));
 		}
+
+		posPasosY++;
+
 		cuadriculaPasos[posPasosY][posPasosX] = TipoBloque.GATO;
-		botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage("gato"));
+		botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage(TipoBloque.GATO.toString()));
 	}
 
 }
