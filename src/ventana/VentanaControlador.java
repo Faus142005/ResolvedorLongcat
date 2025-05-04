@@ -64,11 +64,10 @@ public class VentanaControlador {
 			public void actionPerformed(ActionEvent e) {
 
 				Pasos = modelo.resolverNivel(cuadricula, posX, posY);
-				
+
 				vista.getPasos().setText("");
 
 				if (Pasos != null) {
-					vista.getBotonPasoAnterior().setEnabled(true);
 					vista.getBotonPasoSiguiente().setEnabled(true);
 
 					for (InformacionMovimiento paso : Pasos)
@@ -82,10 +81,56 @@ public class VentanaControlador {
 					for (int i = 0; i < cuadricula.length; i++)
 						cuadriculaPasos[i] = cuadricula[i].clone();
 
+					Pasos.insertar(null);
+
 				} else {
 					vista.getBotonPasoAnterior().setEnabled(false);
 					vista.getBotonPasoSiguiente().setEnabled(false);
 				}
+			}
+		});
+
+		this.vista.getBotonPasoAnterior().addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// TODO Auto-generated method stub
+
+				dibujarEsquina(TipoBloque.LIBRE);
+
+				InformacionMovimiento infMov = Pasos.obtener();
+
+				switch (infMov.getMovimiento()) {
+				case IZQUIERDA:
+
+					limpiarDerecha(infMov);
+					break;
+
+				case DERECHA:
+
+					limpiarIzquierda(infMov);
+					break;
+
+				case ARRIBA:
+
+					limpiarAbajo(infMov);
+					break;
+
+				case ABAJO:
+
+					limpiarArriba(infMov);
+					break;
+				}
+
+				Pasos.retroceder();
+
+				if (!Pasos.tieneAnterior())
+					vista.getBotonPasoAnterior().setEnabled(false);
+
+				dibujarEsquina(TipoBloque.GATO);
+
+				vista.revalidate();
+				vista.repaint();
 			}
 		});
 
@@ -96,8 +141,8 @@ public class VentanaControlador {
 
 				// Dibujar paso
 
+				Pasos.avanzar();
 				InformacionMovimiento infMov = Pasos.obtener();
-				
 				dibujarEsquina(infMov.getEsquina());
 
 				switch (infMov.getMovimiento()) {
@@ -122,10 +167,11 @@ public class VentanaControlador {
 					break;
 				}
 
-				if (Pasos.tieneSiguiente())
-					Pasos.avanzar();
-				else
-					((JButton) e.getSource()).setEnabled(false);
+				if (!Pasos.tieneSiguiente())
+					vista.getBotonPasoSiguiente().setEnabled(false);
+
+				if (!vista.getBotonPasoAnterior().isEnabled())
+					vista.getBotonPasoAnterior().setEnabled(true);
 
 				vista.revalidate();
 				vista.repaint();
@@ -272,7 +318,7 @@ public class VentanaControlador {
 	}
 
 	private void dibujarDerecha(InformacionMovimiento infMov) {
-		
+
 		for (int i = 0; i < infMov.getCantidadBloquesMovidos() - 1; i++) {
 			posPasosX++;
 			cuadriculaPasos[posPasosY][posPasosX] = TipoBloque.GATOHORIZONTAL;
@@ -316,4 +362,59 @@ public class VentanaControlador {
 		botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage(TipoBloque.GATO.toString()));
 	}
 
+	private void limpiarIzquierda(InformacionMovimiento infMov) {
+
+		for (int i = 0; i < infMov.getCantidadBloquesMovidos() - 1; i++) {
+			posPasosX--;
+			cuadriculaPasos[posPasosY][posPasosX] = TipoBloque.LIBRE;
+			botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage(TipoBloque.LIBRE.toString()));
+		}
+
+		posPasosX--;
+
+		cuadriculaPasos[posPasosY][posPasosX] = TipoBloque.LIBRE;
+		botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage(TipoBloque.LIBRE.toString()));
+	}
+
+	private void limpiarDerecha(InformacionMovimiento infMov) {
+
+		for (int i = 0; i < infMov.getCantidadBloquesMovidos() - 1; i++) {
+			posPasosX++;
+			cuadriculaPasos[posPasosY][posPasosX] = TipoBloque.LIBRE;
+			botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage(TipoBloque.LIBRE.toString()));
+		}
+
+		posPasosX++;
+
+		cuadriculaPasos[posPasosY][posPasosX] = TipoBloque.LIBRE;
+		botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage(TipoBloque.LIBRE.toString()));
+	}
+
+	private void limpiarArriba(InformacionMovimiento infMov) {
+
+		for (int i = 0; i < infMov.getCantidadBloquesMovidos() - 1; i++) {
+			posPasosY--;
+			cuadriculaPasos[posPasosY][posPasosX] = TipoBloque.LIBRE;
+			botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage(TipoBloque.LIBRE.toString()));
+		}
+
+		posPasosY--;
+
+		cuadriculaPasos[posPasosY][posPasosX] = TipoBloque.LIBRE;
+		botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage(TipoBloque.LIBRE.toString()));
+	}
+
+	private void limpiarAbajo(InformacionMovimiento infMov) {
+
+		for (int i = 0; i < infMov.getCantidadBloquesMovidos() - 1; i++) {
+			posPasosY++;
+			cuadriculaPasos[posPasosY][posPasosX] = TipoBloque.LIBRE;
+			botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage(TipoBloque.LIBRE.toString()));
+		}
+
+		posPasosY++;
+
+		cuadriculaPasos[posPasosY][posPasosX] = TipoBloque.LIBRE;
+		botonesCuadricula[posPasosY][posPasosX].setIcon(GestorImagenes.getImage(TipoBloque.LIBRE.toString()));
+	}
 }
